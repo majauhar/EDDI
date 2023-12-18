@@ -55,7 +55,7 @@ tfd = tf.contrib.distributions
 
 ### load data
 Data = pd.read_excel(UCI + '/d0.xls')
-Data = Data.as_matrix()
+Data = Data.values # as_matrix()
 ### data preprocess
 max_Data = 1  #
 min_Data = 0  #
