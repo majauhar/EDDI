@@ -342,10 +342,10 @@ class PN_Plus_VAE(object):
             decoded = self._sesh.run(self.decoded,
                                      feed_dict={self.x: x, self.mask: mask_obs})
 
-            target = x * mask_target
-            output = decoded * mask_target
-            SE += np.sum(np.square(target - output))
-            RMSE += np.sqrt(np.sum(np.square(target - output)) / np.sum(mask_target))
+            target = x # * mask_target
+            output = decoded # * mask_target
+            SE += np.sum(np.square(target - output) * mask_target)
+            RMSE += np.sqrt(np.sum((target - output) ** 2 * mask_target) / np.sum(mask_target))
 
         SE = SE / self._M
         RMSE = RMSE / self._M

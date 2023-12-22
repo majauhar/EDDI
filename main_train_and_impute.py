@@ -50,20 +50,51 @@ import random
 from random import sample
 import pandas as pd
 import sklearn.preprocessing as preprocessing
+import pdb
 plt.switch_backend('agg')
 tfd = tf.contrib.distributions
 
 ### load data
-Data = pd.read_excel(UCI + '/d0.xls')
-Data = Data.values # as_matrix()
+# Data = pd.read_excel(UCI + '/d0.xls')
+# Data = Data.values # as_matrix()
+url = "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
+Data = np.array(pd.read_csv(url, low_memory=False, sep=';'))
+# pdb.set_trace()
+# missing_data = np.load('MAR-same-inter_column-7_p-0.2_nan-0.18_depcol-3_dep-7913.npy')
+# missing_data = np.load('MAR-same-random_column-7_p-0.5_nan-0.33_depcol-3_p1-0.17_p2-0.21_p3-0.26_dep-91112.npy')
+# missing_data = np.load('MAR-same-sum_column-7_p-0.2_nan-0.24_depcol-3_dep-71213.npy')
+# missing_data = np.load('MCAR_column-7_p-0.2_nan-0.2.npy')
+# missing_data = np.load('MNAR-notsame-data_housing_mnar_7_p-0.1_maxdep-5_nan-0.13.npy')
+# missing_data = np.load('MNAR-same-inter_column-7_p-0.2_nan-0.20_depcol-4_misdepcol-45_dep-811.npy')
+# missing_data = np.load('MNAR-same-nn_column-7_p-0.5_nan-0.20_depcol-4_misdepcol-03_depcol-1013_threshold-0.4.npy')
+
+missing_data_temp = np.load('Wine_0.7.npy')
+missing_data = np.empty((4898, 12))
+for i in range(4898):
+    missing_data[i] = np.append(missing_data_temp[i], Data[i][11])
+
 ### data preprocess
-max_Data = 1  #
-min_Data = 0  #
-Data_std = (Data - Data.min(axis=0)) / (Data.max(axis=0) - Data.min(axis=0))
-Data = Data_std * (max_Data - min_Data) + min_Data
+# max_Data = 1  #
+# min_Data = 0  #
+# Data_std = (Data - Data.min(axis=0)) / (Data.max(axis=0) - Data.min(axis=0))
+# Data = Data_std * (max_Data - min_Data) + min_Data
+
+# different normalisation
+mean = np.mean(Data, axis=0)
+std = np.std(Data, axis=0)
+
+# print(np.array(mean), np.array(std))
+
+# exit()
+Data = (Data - mean) / std
+# Data = Data - np.mean(Data, axis=0)
+# Data = Data / np.std(Data, axis=0)
+
 # Data = (Data-Data.mean(0))/np.std(Data,0)
 #Mask = np.ones(Data.shape) # This is a mask indicating missingness, 1 = observed, 0 = missing.
-missing_mask = np.random.rand(*Data.shape) <0.7
+# missing_mask = np.random.rand(*Data.shape) <0.7
+missing_mask = np.invert(np.isnan(missing_data)).astype(float)
+# missing_mask = np.isnan(data).astype(float)
 # this UCI data is fully observed. you should modify the set up of Mask if your data contains missing data.
 
 ### split the data into train and test sets
@@ -99,8 +130,10 @@ tf.reset_default_graph()
 # Note that by default, the model calculate RMSE averaged over different imputing samples from partial vae.
 RMSE,X_fill_mean_eddi = impute_p_vae(Data_observed,mask_obs,Data_ground_truth,mask_target,args.latent_dim,args.batch_size,args.K,args.M)
 # Alternatively, you can also first compute the mean of partial vae imputing samples, then calculated RMSE.
-Diff_eddi=X_fill_mean_eddi*mask_target - Data*mask_target
-print('test impute RMSE eddi (estimation 2):', np.sqrt(np.sum(Diff_eddi**2)/np.sum(mask_target)))
+# Diff_eddi=X_fill_mean_eddi*mask_target - Data*mask_target
+Diff_eddi=X_fill_mean_eddi - Data
+
+print('test impute RMSE eddi (estimation 2):', np.sqrt(np.sum(Diff_eddi ** 2 * mask_target)/np.sum(mask_target)))
 
 
 
